@@ -6,6 +6,14 @@
         "peripheral",
         "textutils",
         "fs",
-        "colors"
+        "colors",
+        "redstone",
+        "http",
+        "turtle",
+        "settings",
+        "keys",
+    ],
+    "Lua.diagnostics.disable": [
+        "undefined-field"
     ]
 }

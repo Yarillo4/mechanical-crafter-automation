@@ -1,6 +1,7 @@
 require("stdlib")
 local tArgs = {...}
 
+local input = peripheral.wrap("top")
 local rows = 5
 local columns = 5
 
@@ -42,6 +43,9 @@ local function askDisconnectMachines()
     end
 end
 
+--- Crafters are connected in a certain order (see `promptUserForMachinesConfiguration()`),
+--- this function matches the `n`th crafter to its 2D coordinates `(x,y)` on the crafter grid
+--- 
 ---@param n number Cell ID `1 <= n < nRows*nCols`
 ---@param nRows number Number of rows `1 <= nRows < +inf`
 ---@param nCols number Number of columns `1 <= nCols < +inf`
@@ -49,7 +53,6 @@ end
 ---@return number column
 --[[
 #### Example mapping for a 5x5 grid with:
-* let [n]={x,y}
 * origin {1,1} is at the top left
 * final cell {5,5} at the bottom right (excel sheet layout)
 
@@ -298,3 +301,4 @@ config = result:asOK() --[[@as MechanicalCrafterConfiguration]]
 
 more(config)
 
+local inventory = Inventory.new(input.list())
