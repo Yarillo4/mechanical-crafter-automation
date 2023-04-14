@@ -1,47 +1,12 @@
 require("stdlib")
-local tArgs = {...}
+require("inventory_addon")
+local Recipe = require("recipe")
+local MechanicalCrafterConfiguration = require("mechanical_crafter")
 
+local tArgs = {...}
 local input = peripheral.wrap("top")
 local rows = 5
 local columns = 5
-
-local function byName(machines)
-    local t = {}
-    for _,v in pairs(machines) do
-        local name = peripheral.getName(v)
-        t[name] = v
-    end
-
-    return t
-end
-
-local function normalize(machines)
-    for i,v in pairs(machines) do
-        if (not v.list) then
-            v.list = v.getInventory
-        end
-    end
-
-    return machines
-end
-
-local function askDisconnectMachines()
-    while true do
-        local machines = {peripheral.find(tArgs[2] or "create:mechanical_crafter")}
-        local n = table.count(machines)
-        if (n <= 0) then
-            break
-        end
-        term.clear()
-        term.setCursorPos(1,1)
-        print("Please disconnect every mechanical crafter from the network.")
-        local txt = string.format("There are still %d crafters connected.", n)
-        term.setCursorPos(1,4)
-        term.clearLine()
-        term.write(txt)
-        sleep(1)
-    end
-end
 
 --- Crafters are connected in a certain order (see `promptUserForMachinesConfiguration()`),
 --- this function matches the `n`th crafter to its 2D coordinates `(x,y)` on the crafter grid
@@ -81,128 +46,6 @@ local function mapMachineIDToCoordinates(n, nRows, nCols)
     return row,col
 end
 
----@class MechanicalCrafter
----@field name string Actual peripheral name
----@field periph table|nil Reference to the peripheral's wrap
----@field row number
----@field column number
-local MechanicalCrafter = {}
-
----Constructor
----@return MechanicalCrafter
-function MechanicalCrafter.wrap(name, row, column)
-    local instance = {
-        name=name,
-        row=row,
-        column=column,
-        periph=peripheral.wrap(name)
-    }
-    setmetatable(instance, {__index=MechanicalCrafter})
-    return instance
-end
-
----@class MechanicalCrafterConfiguration
----@field crafters MechanicalCrafter[][]
-local MechanicalCrafterConfiguration = {}
-
----Constructor
----@return MechanicalCrafterConfiguration
-function MechanicalCrafterConfiguration.new()
-    local instance = {
-        crafters = {
-        }
-    }
-    setmetatable(instance, {__index=MechanicalCrafterConfiguration})
-    return instance
-end
-
----Insert
----@param crafter MechanicalCrafter
-function MechanicalCrafterConfiguration:push(crafter)
-    local row = crafter.row
-    local column = crafter.column
-
-    if self.crafters[row] == nil then
-        self.crafters[row] = {}
-    end
-
-    self.crafters[row][column] = crafter
-end
-
----@alias CrafterSaveData {name: string}
----@alias SaveData { crafters: CrafterSaveData[][] }
-
----Save to disk
----@return Result
-function MechanicalCrafterConfiguration:saveToDisk()
-    ---@type SaveData
-    local saveData = {
-        crafters = {}
-    }
-
-    for row in pairs(self.crafters) do
-        saveData.crafters[row] = {}
-
-        for col in pairs(self.crafters[row]) do
-            local v = self.crafters[row][col]
-            saveData.crafters[row][col] = {
-                name = v.name,
-            }
-        end
-    end
-
-    local worked, json = pcall(textutils.serializeJSON, saveData)
-    if not worked then
-        return Result.err("Couldn't save the crafter layout: " + tostring(json))
-    end
-
-    local f, err = fs.open("crafter_layout.json", "w")
-    if not f then
-        ---@cast err string
-        return Result.err(err)
-    end
-
-    f.write(json)
-    f.close()
-
-    return Result.ok(nil)
-end
-
----Load from disk
----@return Result
-function MechanicalCrafterConfiguration.loadFromDisk()
-    local f, err = fs.open("crafter_layout.json", "r")
-    if not f then
-        ---@cast err string
-        return Result.err(err)
-    end
-
-    local json = f.readAll()
-    f.close()
-
-    local worked, data = pcall(textutils.unserializeJSON, json)
-    if not worked then
-        return Result.err("Couldn't parse json, " .. tostring(data))
-    end
-
-    if not data or not data.crafters then
-        return Result.err("Json was parsed but the save file doesn't seem to contain json")
-    end
-
-    ---@cast data SaveData
-    local config = MechanicalCrafterConfiguration.new()
-
-    for row in pairs(data.crafters) do
-        for col in pairs(data.crafters[row]) do
-            local v = data.crafters[row][col]
-            local crafter = MechanicalCrafter.wrap(v.name, row, col)
-            config:push(crafter)
-        end
-    end
-
-    return Result.ok(config)
-end
-
 ---
 ---@param rows number
 ---@param columns number
@@ -240,7 +83,8 @@ local function promptUserForMachinesConfiguration(rows, columns)
                 If the user is idle, die after 10 minutes spent here
         --]]
         i = i+1
----@diagnostic disable-next-line: undefined-field
+        
+        ---@diagnostic disable-next-line: undefined-field
         if (i > maxNumberOfIterationsBeforeTimeout) then os.shutdown() end
 
         --[[
@@ -254,7 +98,7 @@ local function promptUserForMachinesConfiguration(rows, columns)
                 knownMachinesCount = knownMachinesCount+1
 
                 local row,col = mapMachineIDToCoordinates(knownMachinesCount, rows, columns)
-                local crafter = MechanicalCrafter.wrap(machineName, row, col)
+                local crafter = machineSetup:addCrafter(machineName, row, col)
 
                 machineSetup:push(crafter)
 
@@ -276,12 +120,34 @@ local function promptUserForMachinesConfiguration(rows, columns)
     return Result.ok(machineSetup)
 end
 
+local function askDisconnectMachines()
+    while true do
+        local machines = {peripheral.find(tArgs[2] or "create:mechanical_crafter")}
+        local n = table.count(machines)
+        if (n <= 0) then
+            break
+        end
+        term.clear()
+        term.setCursorPos(1,1)
+        print("Please disconnect every mechanical crafter from the network.")
+        local txt = string.format("There are still %d crafters connected.", n)
+        term.setCursorPos(1,4)
+        term.clearLine()
+        term.write(txt)
+        sleep(1)
+    end
+end
+
+--[[##############################################
+###                                            ###
+###                   Main                     ###
+###                                            ###
+################################################]]
 
 --- Configs as loaded either from disk or generated from the user being prompted
 ---@type MechanicalCrafterConfiguration
 local config
 
--- 
 local result = MechanicalCrafterConfiguration.loadFromDisk()
 if not result.isOk then
     -- Couldn't load from disk, we have to generate

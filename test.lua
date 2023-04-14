@@ -1,5 +1,7 @@
 term, sleep, shell, peripheral, textutils, fs, colors, redstone, http, turtle, settings, keys = {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
-require("stdlib/stdlib")
+require("stdlib")
+local Recipe = require("recipe")
+local MechanicalCrafter = require("mechanical_crafter")
 
 local function mapMachineIDToCoordinates(n, nRows, nCols)
 	--assert(numberOfMachines == 25, "If you change the number of machines you have to rewrite the mapping")
@@ -60,72 +62,6 @@ end
 
 local function tprint(tbl)
 	print(stprint(tbl))
-end
-
----@class Recipe
----@field pattern     Slot[][]
----@field ingredients {[string]:number}
-local Recipe = {}
-
----Constructor
----@param pattern     string[][]
----@param rows        number
----@param columns     number
----@return Recipe
-function Recipe.new(pattern, rows, columns)
-    local instance = {
-		pattern=pattern
-	}
-
-	instance.ingredients = {}
-	for row in pairs(pattern) do
-		for col in pairs(pattern[row]) do
-			local v = pattern[row][col]
-			if instance.ingredients[v] then
-				instance.ingredients[v] = instance.ingredients[v] + 1
-			else
-				instance.ingredients[v] = 1
-			end
-		end
-	end
-
-	setmetatable(instance, {__index=Recipe})
-    return instance
-end
-
----comment
----@param tally {[string]: number}
----@return Slot[]
-local function flatten(tally)
-	local tmp = {}
-	for name,count in pairs(tally) do
-		table.insert(tmp, {name=name, count=count})
-	end
-	return tmp
-end
-
-function Inventory:hash()
-	local contents = flatten(self:tally())
-	table.sort(contents, function(a,b) return a.name < b.name end)
-	return stprint(contents)
-end
-
-function Recipe:hash()
-	local contents = flatten(self.ingredients)
-	table.sort(contents, function(a,b) return a.name < b.name end)
-	return stprint(contents)
-end
-
----comment
----@param recipe Recipe
-function Inventory:canMake(recipe)
-	for name,count in pairs(recipe.ingredients) do
-		if self:count(name) < count then
-			return false
-		end
-	end
-
-	return true
 end
 
 local recipe = Recipe.new({
