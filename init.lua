@@ -4,9 +4,20 @@ local Recipe = require("recipe")
 local MechanicalCrafterConfiguration = require("mechanical_crafter")
 
 local tArgs = {...}
-local input = peripheral.wrap("top")
+local input = peripheral.wrap("sophisticatedstorage:barrel_1")
+local output = peripheral.wrap("sophisticatedstorage:barrel_2")
 local rows = 5
 local columns = 5
+
+local recipes = {
+    ["create:crushing_wheel"]=Recipe.new({
+        {nil, "create:andesite_alloy", "create:andesite_alloy", "create:andesite_alloy", nil},
+        {"create:andesite_alloy", "create:andesite_alloy", "minecraft:oak_planks", "create:andesite_alloy", "create:andesite_alloy"},
+        {"create:andesite_alloy", "minecraft:oak_planks", "minecraft:stone", "minecraft:oak_planks", "create:andesite_alloy"},
+        {"create:andesite_alloy", "create:andesite_alloy", "minecraft:oak_planks", "create:andesite_alloy", "create:andesite_alloy"},
+        {nil, "create:andesite_alloy", "create:andesite_alloy", "create:andesite_alloy", nil},
+    })
+}
 
 --- Crafters are connected in a certain order (see `promptUserForMachinesConfiguration()`),
 --- this function matches the `n`th crafter to its 2D coordinates `(x,y)` on the crafter grid
@@ -98,9 +109,7 @@ local function promptUserForMachinesConfiguration(rows, columns)
                 knownMachinesCount = knownMachinesCount+1
 
                 local row,col = mapMachineIDToCoordinates(knownMachinesCount, rows, columns)
-                local crafter = machineSetup:addCrafter(machineName, row, col)
-
-                machineSetup:push(crafter)
+                machineSetup:addCrafter(machineName, row, col)
 
                 local txt = string.format("%d/%d crafters connected.", knownMachinesCount, numberOfMachines)
                 term.setCursorPos(x,y)
@@ -165,6 +174,29 @@ end
 
 config = result:asOK() --[[@as MechanicalCrafterConfiguration]]
 
-more(config)
+local recipeHashes = {}
+for i,v in pairs(recipes) do
+    recipeHashes[i] = v:hash()
+end
 
-local inventory = Inventory.new(input.list())
+while true do
+    local inventory = Inventory.new(input.list())
+    local hash = Inventory:hash()
+
+    for i,v in pairs(recipeHashes) do
+        if v == hash then
+            -- Craft
+            local outputHash = Inventory.new(output.list()):hash()
+            config:placeRecipe(recipes[i], input)
+            redstone.pulse("all", 1)
+
+            -- Wait for change
+            local currHash
+            repeat
+                sleep(0.5)
+                currHash = Inventory.new(output.list()):hash()
+            until currHash ~= outputHash
+        end
+    end
+end
+

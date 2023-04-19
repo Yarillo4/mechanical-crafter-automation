@@ -22,10 +22,8 @@ local Recipe = {}
 
 ---Constructor
 ---@param pattern     string[][]
----@param rows        number
----@param columns     number
 ---@return Recipe
-function Recipe.new(pattern, rows, columns)
+function Recipe.new(pattern)
     local instance = {
 		pattern=pattern
 	}

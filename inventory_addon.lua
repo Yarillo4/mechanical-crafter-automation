@@ -1,3 +1,5 @@
+require("stdlib")
+
 --[[
 	This isn't the best thing to do
 	But this file just adds stuff to the Inventory class which is part of stdlib.

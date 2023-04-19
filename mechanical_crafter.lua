@@ -129,8 +129,7 @@ function MechanicalCrafterConfiguration.loadFromDisk()
     for row in pairs(data.crafters) do
         for col in pairs(data.crafters[row]) do
             local v = data.crafters[row][col]
-            local crafter = MechanicalCrafter.wrap(v.name, row, col)
-            config:push(crafter)
+            config:addCrafter(v.name, row, col)
         end
     end
 
@@ -139,26 +138,27 @@ end
 
 ---Push items from the input chest to the crafters
 ---@param recipe Recipe
----@param input Inventory
+---@param input table Inventory peripheral with function pushItems
 function MechanicalCrafterConfiguration:placeRecipe(recipe, input)
-	for row in recipe.pattern do
-		for col in recipe.pattern[row] do
+    local everythingWorked = true
+    local inputInv = Inventory.new(input.list())
+	for row in pairs(recipe.pattern) do
+		for col in pairs(recipe.pattern[row]) do
             local v = recipe.pattern[row][col]
-            if (v and v.count > 0) then
-	            local worked, actuallyPushed = pcall(input.pushItems, machineName, i, maxItemPerMachine)
+            local slot = inputInv:find(v)
+            
+            if (slot) then
+                local crafter = self.crafters[row][col]
+                local worked, actuallyPushed = pcall(input.pushItems, crafter.name, slot, 1)
+                if not worked then
+                    everythingWorked = false
+                    Debug.errorf("Error pushing %s x%d to %s (%d,%d), %s", v, 1, crafter.name, crafter.row, crafter.column, actuallyPushed)
+                else
+                    Debug.infof("Pushed %s x%d to %s (%d,%d)", v, 1, crafter.name, crafter.row, crafter.column)
+                end
             end
         end
     end
-
-
-	local worked, actuallyPushed = pcall(input.pushItems, machineName, i, maxItemPerMachine)
-	if (worked) then
-		local txt = string.format("[%s] => %d/%d", currentStack.name, actuallyPushed, maxItemPerMachine)
-		Debug.info(txt)
-	else
-		local txt = string.format("[%s] => %d/%d", currentStack.name, actuallyPushed, maxItemPerMachine)
-		Debug.error(txt)
-	end
 end
 
 return MechanicalCrafterConfiguration, MechanicalCrafter
