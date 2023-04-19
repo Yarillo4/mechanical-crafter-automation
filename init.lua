@@ -198,12 +198,11 @@ while true do
             redstone.pulse("all", 1)
 
             -- Wait for change
-            local currHash
-            repeat
+            local currHash = outputInv:hash()
+            while currHash == outputHash do
                 sleep(0.5)
                 currHash = outputInv:hash()
-            until currHash ~= outputHash
+            end
         end
     end
 end
-
