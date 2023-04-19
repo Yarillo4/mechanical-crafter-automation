@@ -180,11 +180,10 @@ for i,v in pairs(recipes) do
 end
 
 while true do
-    local inventory = Inventory.new(input.list())
-    local hash = Inventory:hash()
+    local inputHash = Inventory.new(input.list()):hash()
 
     for i,v in pairs(recipeHashes) do
-        if v == hash then
+        if v == inputHash then
             -- Craft
             local outputHash = Inventory.new(output.list()):hash()
             config:placeRecipe(recipes[i], input)
