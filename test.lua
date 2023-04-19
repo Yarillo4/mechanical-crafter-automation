@@ -102,6 +102,12 @@ assert(type(h2) == "string", "h2 must be a string")
 assert(h1 == h2, "hashes don't match")
 print("All tests OK!")
 
+local iEmpty = Inventory.fromTable({})
+assert(iEmpty ~= nil, "iEmpty should not be nil")
+assert(iEmpty:isEmpty() == true, "iEmpty should have an empty inventory")
+local iEmptyHash = iEmpty:hash()
+
+
 local i1 = Inventory.fromTable({
 	{name = "minecraft:stone", count = 3},
 	{name = "minecraft:stone", count = 0},
@@ -120,8 +126,34 @@ local i2 = Inventory.fromTable({
 assert(i2 ~= nil, "i2 should not be nil")
 local i2Hash = i2:hash()
 
+local i3 = Inventory.fromTable({
+	{name = "minecraft:stone", count = 3},
+	{name = "minecraft:stone", count = 0},
+	{name = "minecraft:stone", count = 0},
+	{name = "minecraft:stone", count = 0},
+	{name = "minecraft:stone", count = 1},
+	{name = "minecraft:stone", count = 1},
+	{name = "minecraft:stone", count = 4},
+})
+assert(i3 ~= nil, "i3 should not be nil")
+local i3Hash = i3:hash()
+
+local i4 = Inventory.fromTable({
+	{name = "minecraft:stone", count = 4},
+})
+assert(i4 ~= nil, "i4 should not be nil")
+local i4Hash = i4:hash()
+
 assert(i1:isEqual(i2), "i1 should be equal to i2")
-assert(i2:isEmpty() == false, "i2 should have a non-empty inventory")
+assert(not i1:isEqual(i3), "i1 should not be equal to i3")
+assert(not i1:isEqual(i4), "i1 should not be equal to i4")
+assert(not i1:isEqual(iEmpty), "i1 should not be equal to iEmpty")
+assert(not iEmpty:isEqual(i1), "iEmpty should not be equal to i1")
 assert(i1:isEmpty() == false, "i1 should have a non-empty inventory")
-assert(i2:hash() == i2Hash, "i2 should have an unchanged inventory")
+assert(i2:isEmpty() == false, "i2 should have a non-empty inventory")
+assert(i3:isEmpty() == false, "i3 should have a non-empty inventory")
+assert(i4:isEmpty() == false, "i4 should have a non-empty inventory")
 assert(i1:hash() == i1Hash, "i1 should have an unchanged inventory")
+assert(i2:hash() == i2Hash, "i2 should have an unchanged inventory")
+assert(i3:hash() == i3Hash, "i3 should have an unchanged inventory")
+assert(i4:hash() == i4Hash, "i4 should have an unchanged inventory")
