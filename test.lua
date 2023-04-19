@@ -101,3 +101,27 @@ assert(type(h1) == "string", "h1 must be a string")
 assert(type(h2) == "string", "h2 must be a string")
 assert(h1 == h2, "hashes don't match")
 print("All tests OK!")
+
+local i1 = Inventory.fromTable({
+	{name = "minecraft:stone", count = 3},
+	{name = "minecraft:stone", count = 0},
+	{name = "minecraft:stone", count = 1},
+	{name = "minecraft:stone", count = 4},
+})
+assert(i1 ~= nil, "i1 should not be nil")
+local i1Hash = i1:hash()
+
+local i2 = Inventory.fromTable({
+	{name = "minecraft:stone", count = 3},
+	{name = "minecraft:stone", count = 0},
+	{name = "minecraft:stone", count = 1},
+	{name = "minecraft:stone", count = 4},
+})
+assert(i2 ~= nil, "i2 should not be nil")
+local i2Hash = i2:hash()
+
+assert(i1:isEqual(i2), "i1 should be equal to i2")
+assert(i2:isEmpty() == false, "i2 should have a non-empty inventory")
+assert(i1:isEmpty() == false, "i1 should have a non-empty inventory")
+assert(i2:hash() == i2Hash, "i2 should have an unchanged inventory")
+assert(i1:hash() == i1Hash, "i1 should have an unchanged inventory")
