@@ -138,27 +138,35 @@ end
 
 ---Push items from the input chest to the crafters
 ---@param recipe Recipe
----@param input table Inventory peripheral with function pushItems
+---@param input Inventory Inventory peripheral with the pushItems feature accessible
 function MechanicalCrafterConfiguration:placeRecipe(recipe, input)
     local everythingWorked = true
-    local inputInv = Inventory.new(input.list())
+    local inputInv = Inventory.new(input)
+    if not inputInv then
+        return false
+    end
+
 	for row in pairs(recipe.pattern) do
 		for col in pairs(recipe.pattern[row]) do
             local v = recipe.pattern[row][col]
-            local slot = inputInv:find(v)
-            
-            if (slot) then
-                local crafter = self.crafters[row][col]
-                local worked, actuallyPushed = pcall(input.pushItems, crafter.name, slot, 1)
-                if not worked then
-                    everythingWorked = false
-                    Debug.errorf("Error pushing %s x%d to %s (%d,%d), %s", v, 1, crafter.name, crafter.row, crafter.column, actuallyPushed)
-                else
-                    Debug.infof("Pushed %s x%d to %s (%d,%d)", v, 1, crafter.name, crafter.row, crafter.column)
+
+            if type(v) == "string" then
+                local slot = inputInv:find(v)
+
+                if (slot) then
+                    local crafter = self.crafters[row][col]
+                    local worked, actuallyPushed = pcall(inputInv:getPeripheral().pushItems, crafter.name, slot, 1)
+                    if not worked then
+                        everythingWorked = false
+                        Debug.errorf("Error pushing %s x%d to %s (%d,%d), %s", v, 1, crafter.name, crafter.row, crafter.column, actuallyPushed)
+                    else
+                        Debug.infof("Pushed %s x%d to %s (%d,%d)", v, 1, crafter.name, crafter.row, crafter.column)
+                    end
                 end
             end
         end
     end
+    return everythingWorked
 end
 
 return MechanicalCrafterConfiguration, MechanicalCrafter

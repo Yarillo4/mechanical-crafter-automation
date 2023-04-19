@@ -179,13 +179,21 @@ for i,v in pairs(recipes) do
     recipeHashes[i] = v:hash()
 end
 
-while true do
-    local inputHash = Inventory.new(input.list()):hash()
+local inputInv = Inventory.new(input)
+if not inputInv then
+    error("Can't read the input inventory's peripheral properly. Is the connection to the input chest OK?")
+end
 
+local outputInv = Inventory.new(output)
+if not outputInv then
+    error("Can't read the output inventory's peripheral properly. Is the connection to the output chest OK?")
+end
+
+while true do
     for i,v in pairs(recipeHashes) do
-        if v == inputHash then
+        if v == input:hash() then
             -- Craft
-            local outputHash = Inventory.new(output.list()):hash()
+            local outputHash = outputInv:hash()
             config:placeRecipe(recipes[i], input)
             redstone.pulse("all", 1)
 
@@ -193,7 +201,7 @@ while true do
             local currHash
             repeat
                 sleep(0.5)
-                currHash = Inventory.new(output.list()):hash()
+                currHash = outputInv:hash()
             until currHash ~= outputHash
         end
     end
