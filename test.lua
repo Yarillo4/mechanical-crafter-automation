@@ -100,7 +100,6 @@ local h2 = nineStonesRecipe:hash()
 assert(type(h1) == "string", "h1 must be a string")
 assert(type(h2) == "string", "h2 must be a string")
 assert(h1 == h2, "hashes don't match")
-print("All tests OK!")
 
 local iEmpty = Inventory.fromTable({})
 assert(iEmpty ~= nil, "iEmpty should not be nil")
@@ -159,3 +158,9 @@ assert(i2:hash() == i2Hash, "i2 should have an unchanged inventory after the tes
 assert(i3:hash() == i3Hash, "i3 should have an unchanged inventory after the tests")
 assert(i4:hash() == i4Hash, "i4 should have an unchanged inventory after the tests")
 assert(iEmpty:hash() == iEmptyHash, "iEmpty should have an unchanged inventory after the tests")
+
+
+
+
+
+print("All tests OK!")
