@@ -1,3 +1,5 @@
+require("stdlib")
+
 ---comment
 ---@param tally {[string]: number}
 ---@return Slot[]
@@ -17,7 +19,7 @@ end
 
 ---@class Recipe
 ---@field pattern     Slot[][]
----@field ingredients {[string]:number}
+---@field _ingredients {[string]:number}
 local Recipe = {}
 
 ---Constructor
@@ -28,14 +30,14 @@ function Recipe.new(pattern)
 		pattern=pattern
 	}
 
-	instance.ingredients = {}
+	instance._ingredients = {}
 	for row in pairs(pattern) do
 		for col in pairs(pattern[row]) do
 			local v = pattern[row][col]
-			if instance.ingredients[v] then
-				instance.ingredients[v] = instance.ingredients[v] + 1
+			if instance._ingredients[v] then
+				instance._ingredients[v] = instance._ingredients[v] + 1
 			else
-				instance.ingredients[v] = 1
+				instance._ingredients[v] = 1
 			end
 		end
 	end
@@ -44,10 +46,12 @@ function Recipe.new(pattern)
     return instance
 end
 
-function Recipe:hash()
-	local contents = flatten(self.ingredients)
+---Returns the minimal amount of items required to create the recipe's pattern
+---@return Inventory|nil
+function Recipe:ingredients()
+	local contents = flatten(self._ingredients)
 	table.sort(contents, function(a,b) return a.name < b.name end)
-	return textutils.serializeJSON(contents)
+	return Inventory.fromTable(contents);
 end
 
 return Recipe
